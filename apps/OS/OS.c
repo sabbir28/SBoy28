@@ -288,14 +288,6 @@ static void draw_active_window(HDC dc)
     if (str_eq(g_desktop.active_window_title, "Console")) {
         uint32_t i;
         int32_t y = g_desktop.active_window.top + 14;
-        os_rect_t console_area = {
-            g_desktop.active_window.left + 2,
-            g_desktop.active_window.top + 12,
-            rect_width(g_desktop.active_window) - 4,
-            rect_height(g_desktop.active_window) - 14
-        };
-
-        os_gui_fill_rect(console_area, BLACK);
 
         TextOutA(dc, g_desktop.active_window.left + 6, y,
                  "Type commands then press ENTER", 29);
@@ -408,12 +400,12 @@ static LRESULT CALLBACK desktop_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPA
     switch (msg) {
         case WM_KEYDOWN:
             console_handle_key((uint8_t)wParam);
-            if (wParam == KEY_F1) set_active_window("Console");
-            if (wParam == KEY_F2) set_active_window("Task Manager");
-            if (wParam == KEY_F3) set_active_window("Settings");
-            if (wParam == KEY_F4) set_active_window("End Session");
-            if (wParam == KEY_F5) set_active_window("Shut Down");
-            if (wParam == KEY_F6) set_active_window("Restart");
+            if (wParam == KEY_C) set_active_window("Console");
+            if (wParam == KEY_T) set_active_window("Task Manager");
+            if (wParam == KEY_S) set_active_window("Settings");
+            if (wParam == KEY_E) set_active_window("End Session");
+            if (wParam == KEY_D) set_active_window("Shut Down");
+            if (wParam == KEY_R) set_active_window("Restart");
             if (wParam == KEY_ESC) close_active_window();
             return 0;
 
