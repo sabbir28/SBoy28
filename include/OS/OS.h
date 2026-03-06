@@ -5,6 +5,17 @@
 #ifndef SBOY28_OS_H
 #define SBOY28_OS_H
 
-int main();
+#include <stdint.h>
+
+#define OS_MAX_APPS 4
+
+typedef enum {
+    OS_APP_STOPPED = 0,
+    OS_APP_RUNNING,
+    OS_APP_SUSPENDED,
+    OS_APP_TERMINATED
+} os_app_state_t;
+
+int main(void);
 
 #endif //SBOY28_OS_H
