@@ -328,6 +328,16 @@ static void draw_active_window(HDC dc)
             TextOutA(dc, g_desktop.active_window.left + 6, g_desktop.active_window.bottom - 12,
                      input_line, (int)strlen(input_line));
         }
+    } else if (str_eq(g_desktop.active_window_title, "Shut Down")) {
+        TextOutA(dc, g_desktop.active_window.left + 10, g_desktop.active_window.top + 20,
+                 "Press ENTER to power off", 24);
+        TextOutA(dc, g_desktop.active_window.left + 10, g_desktop.active_window.top + 34,
+                 "Press ESC to cancel", 19);
+    } else if (str_eq(g_desktop.active_window_title, "Restart")) {
+        TextOutA(dc, g_desktop.active_window.left + 10, g_desktop.active_window.top + 20,
+                 "Press ENTER to reboot", 21);
+        TextOutA(dc, g_desktop.active_window.left + 10, g_desktop.active_window.top + 34,
+                 "Press ESC to cancel", 19);
     } else {
         TextOutA(dc, g_desktop.active_window.left + 10, g_desktop.active_window.top + 20,
                  "Window opened from Start menu", 29);
@@ -417,6 +427,15 @@ static LRESULT CALLBACK desktop_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPA
 
     switch (msg) {
         case WM_KEYDOWN:
+            if (g_desktop.active_window_open && str_eq(g_desktop.active_window_title, "Shut Down") && wParam == KEY_ENTER) {
+                os_shutdown();
+                return 0;
+            }
+            if (g_desktop.active_window_open && str_eq(g_desktop.active_window_title, "Restart") && wParam == KEY_ENTER) {
+                os_restart();
+                return 0;
+            }
+
             console_handle_key((uint8_t)wParam);
             if (wParam == KEY_C) set_active_window("Console");
             if (wParam == KEY_T) set_active_window("Task Manager");
