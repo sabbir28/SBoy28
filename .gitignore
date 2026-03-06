@@ -1,0 +1,39 @@
+# Ignore build artifacts
+/build/
+build/
+cmake-build-debug/
+cmake-build-release/
+.vscode/
+.idea/
+
+# ISO + binaries (in case generated outside build)
+*.iso
+*.bin
+*.elf
+*.o
+
+# Temporary OS images
+*.img
+*.flp
+*.dmg
+
+# Editor junk
+*.swp
+*.swo
+*.tmp
+*~
+
+# VSCode
+.vscode/
+
+# CLion / JetBrains
+.idea/
+
+# Logs
+*.log
+
+# macOS noise
+.DS_Store
+
+# Windows noise
+Thumbs.db
