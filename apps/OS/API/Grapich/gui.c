@@ -1,5 +1,6 @@
-#include "OS/gui.h"
+#include "OS/Grapich/gui.h"
 #include "ui/colors.h"
+#include "OS/Grapich/windows.h"
 
 void os_gui_fill_rect(os_rect_t rect, uint8_t color)
 {
@@ -52,7 +53,7 @@ void os_gui_draw_taskbar(bool start_menu_open)
 
 void os_gui_draw_window(os_rect_t rect, const char* title)
 {
-    os_gui_fill_rect(rect, LIGHT_GREY);
+    os_gui_fill_rect(rect, BLUE);
     os_gui_draw_rect_outline(rect, WHITE);
 
     os_rect_t shadow = { rect.x + rect.w, rect.y + 2, 2, rect.h };

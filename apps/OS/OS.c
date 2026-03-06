@@ -1,11 +1,9 @@
 #include "OS/OS.h"
-#include "OS/gui.h"
+#include "OS/Grapich/gui.h"
 #include "common/utils.h"
 #include "drivers/keyboard.h"
 #include "drivers/mouse.h"
 #include "drivers/thread.h"
-#include "drivers/vga.h"
-#include "ui/colors.h"
 #include "kernel/pmm.h"
 
 typedef struct {
@@ -228,9 +226,9 @@ static void draw_home_screen(void)
     os_gui_draw_desktop_background();
     os_gui_draw_taskbar(g_desktop.start_menu_open);
 
-    os_gui_draw_window(g_desktop.app_window, "SBoy28 Desktop - Apps");
+    os_gui_draw_window(g_desktop.app_window, "Desktop");
     vga_draw_string((uint32_t)g_desktop.app_window.x + 6, (uint32_t)g_desktop.app_window.y + 4,
-                    "1-4 Select App | L/S/R/T Manage", WHITE);
+                    "", WHITE);
     draw_app_list();
 
     os_gui_draw_window(g_desktop.status_window, "System");

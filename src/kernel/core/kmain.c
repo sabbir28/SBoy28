@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 #include "kernel/kernel.h"
 #include "kernel/gdt.h"
 #include "kernel/idt.h"
@@ -23,114 +24,109 @@ void time_thread(void* arg);
 
 mutex_t vga_mutex;
 
-static void draw_boot_log_line(uint32_t y, const char* status, uint8_t color)
-{
+/* ---------------- KERNEL-LEVEL INTEGER TO STRING ---------------- */
+static void int_to_str(int val, char* buf, int width) {
+    // Supports positive numbers only
+    int i = width - 1;
+    buf[i--] = '\0';
+    if (val == 0) {
+        buf[i--] = '0';
+    } else {
+        while (val > 0 && i >= 0) {
+            buf[i--] = '0' + (val % 10);
+            val /= 10;
+        }
+    }
+    // Fill leading zeros
+    while (i >= 0) buf[i--] = '0';
+}
+
+/* ---------------- FORMAT TIME LINE ---------------- */
+static void format_time_line(char* out, int hours, int minutes, int seconds, const char* status) {
+    // Format: [hh:mm:ss] : status
+    out[0] = '[';
+    int_to_str(hours, out + 1, 3);    // 2 digits + null temporary
+    out[3] = ':';
+    int_to_str(minutes, out + 4, 3);
+    out[6] = ':';
+    int_to_str(seconds, out + 7, 3);
+    out[9] = ']';
+    out[10] = ' ';
+    // Copy status manually
+    int i = 0;
+    while (status && status[i] && (i + 11) < 64) {
+        out[11 + i] = status[i];
+        i++;
+    }
+    out[11 + i] = '\0';
+}
+
+/* ---------------- DRAW BOOT LOG ---------------- */
+static void draw_boot_log_line(uint32_t y, const char* status, uint8_t color) {
     char line[64];
     int hours = get_hours();
     int minutes = get_minutes();
     int seconds = get_seconds();
 
-    line[0] = '[';
-    line[1] = '0' + (hours / 10);
-    line[2] = '0' + (hours % 10);
-    line[3] = ':';
-    line[4] = '0' + (minutes / 10);
-    line[5] = '0' + (minutes % 10);
-    line[6] = ':';
-    line[7] = '0' + (seconds / 10);
-    line[8] = '0' + (seconds % 10);
-    line[9] = ']';
-    line[10] = ' ';
-    line[11] = ':';
-    line[12] = ' ';
-    line[13] = '\0';
-
-    append(line, status);
+    format_time_line(line, hours, minutes, seconds, status);
 
     vga_draw_string(10, y, line, color);
     vga_render();
 }
 
-void kmain(multiboot_info_t* mbd)
-{
+/* ---------------- KMAIN ---------------- */
+void kmain(multiboot_info_t* mbd) {
     (void)mbd;
 
-    /* Core CPU structures */
     init_gdt();
     init_idt();
-
-    /* Memory Management */
     pmm_init(mbd);
     vmm_init();
     kheap_init();
 
-    /* Graphics subsystem */
     vga_init();
     vga_clear(DARK_GREY);
-
     vga_draw_string(10, 10, "SBoy28 OS - Boot Sequence", WHITE);
     draw_boot_log_line(26, "graphics initialized successfully", BRIGHT_CYAN);
 
-    /* Hardware timers and drivers */
     init_pit(100);
     draw_boot_log_line(38, "pit initialized successfully", BRIGHT_CYAN);
 
     mouse_init();
     draw_boot_log_line(50, "mouse initialized successfully", BRIGHT_GREEN);
 
-    /* Scheduler */
     thread_system_init();
     mutex_init(&vga_mutex);
     draw_boot_log_line(62, "thread initialized successfully", BRIGHT_GREEN);
-
     draw_boot_log_line(86, "switching to OS home screen...", YELLOW);
 
     Sleep(1);
-
-    /* Clean transition to apps/OS/OS.c */
     vga_clear(BLUE);
     vga_render();
 
-    /* Enable interrupts */
     __asm__ volatile("sti");
 
-    /* Idle loop */
-    //while (1) {
-    //    __asm__ volatile("hlt");
-    //}
-
-    // Here i want to coll those main application !
-
+    // Call main user application
     main();
 }
 
 /* ---------------- TIME THREAD ---------------- */
-
-void time_thread(void* arg)
-{
+void time_thread(void* arg) {
     (void)arg;
-
-    char buf[16];
+    char buf[3]; // 2 digits + null
 
     while (1) {
-
         int minutes = get_minutes();
-        itoa(minutes, buf, 10);
+        int_to_str(minutes, buf, 3);
 
         mutex_lock(&vga_mutex);
-
-        /* Clear previous text area */
-        for (int x = 10; x < 120; x++) {
-            for (int y = 40; y < 50; y++) {
+        for (int x = 10; x < 120; x++)
+            for (int y = 40; y < 50; y++)
                 vga_put_pixel(x, y, BLUE);
-            }
-        }
 
         vga_draw_string(10, 40, "Minute:", WHITE);
         vga_draw_string(70, 40, buf, YELLOW);
-
         vga_render();
-
         mutex_unlock(&vga_mutex);
 
         thread_yield();
@@ -138,49 +134,30 @@ void time_thread(void* arg)
 }
 
 /* ---------------- MOUSE THREAD ---------------- */
-
-void mouse_render_thread(void* arg)
-{
+void mouse_render_thread(void* arg) {
     (void)arg;
-
-    int32_t last_x = -1;
-    int32_t last_y = -1;
-
-    int32_t cur_x;
-    int32_t cur_y;
-
+    int32_t last_x = -1, last_y = -1;
+    int32_t cur_x, cur_y;
     uint8_t saved_cursor_area[25];
 
     while (1) {
-
         mouse_get_position(&cur_x, &cur_y);
 
         if (cur_x != last_x || cur_y != last_y) {
-
             mutex_lock(&vga_mutex);
 
-            /* Restore previous pixels */
             if (last_x != -1) {
                 int idx = 0;
-
-                for (int dy = -2; dy <= 2; dy++) {
-                    for (int dx = -2; dx <= 2; dx++) {
+                for (int dy = -2; dy <= 2; dy++)
+                    for (int dx = -2; dx <= 2; dx++)
                         vga_put_pixel(last_x + dx, last_y + dy, saved_cursor_area[idx++]);
-                    }
-                }
             }
 
-            /* Save new background */
             int idx = 0;
+            for (int dy = -2; dy <= 2; dy++)
+                for (int dx = -2; dx <= 2; dx++)
+                    saved_cursor_area[idx++] = vga_get_pixel(cur_x + dx, cur_y + dy);
 
-            for (int dy = -2; dy <= 2; dy++) {
-                for (int dx = -2; dx <= 2; dx++) {
-                    saved_cursor_area[idx++] =
-                            vga_get_pixel(cur_x + dx, cur_y + dy);
-                }
-            }
-
-            /* Draw cursor */
             for (int dy = -2; dy <= 2; dy++)
                 vga_put_pixel(cur_x, cur_y + dy, WHITE);
 
@@ -188,7 +165,6 @@ void mouse_render_thread(void* arg)
                 vga_put_pixel(cur_x + dx, cur_y, WHITE);
 
             vga_render();
-            
             mutex_unlock(&vga_mutex);
 
             last_x = cur_x;
@@ -199,38 +175,26 @@ void mouse_render_thread(void* arg)
 }
 
 /* ---------------- BACKGROUND THREAD ---------------- */
-
-void background_thread(void* arg)
-{
+void background_thread(void* arg) {
     (void)arg;
-
     uint32_t ticks = 0;
-    char buf[32];
+    char buf[11]; // max 10 digits + null
 
     while (1) {
-
         ticks++;
-        itoa(ticks, buf, 10);
+        int_to_str(ticks, buf, 11);
 
         mutex_lock(&vga_mutex);
-
-        /* Clear counter region */
-        for (int x = 250; x < 360; x++) {
-            for (int y = 180; y < 195; y++) {
+        for (int x = 250; x < 360; x++)
+            for (int y = 180; y < 195; y++)
                 vga_put_pixel(x, y, BLUE);
-            }
-        }
 
         vga_draw_string(250, 180, "Ticks:", WHITE);
         vga_draw_string(310, 180, buf, YELLOW);
-
         vga_render();
-
         mutex_unlock(&vga_mutex);
 
-        /* Artificial delay */
-        for (volatile int i = 0; i < 100000; i++);
-
+        for (volatile int i = 0; i < 100000; i++); // delay
         thread_yield();
     }
 }
