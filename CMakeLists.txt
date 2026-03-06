@@ -21,19 +21,21 @@ set(COMMON_LINK_FLAGS -m32 -nostdlib -nodefaultlibs -nostartfiles -static)
 include_directories(include)
 
 # Sources
-file(GLOB KERNEL_CORE_SOURCES 
+file(GLOB KERNEL_CORE_SOURCES CONFIGURE_DEPENDS
     src/kernel/core/*.c 
     src/kernel/core/*.s 
     src/ui/*.c 
     src/common/*.c
 )
-file(GLOB KERNEL_DRIVER_SOURCES 
+list(REMOVE_ITEM KERNEL_CORE_SOURCES src/kernel/core/power.c)
+
+file(GLOB KERNEL_DRIVER_SOURCES CONFIGURE_DEPENDS
     src/drivers/*.c
     src/drivers/mouse/src/*.c
     src/drivers/thread/src/*.c
     src/drivers/thread/asm/*.s
 )
-set(KERNEL_SOURCES ${KERNEL_CORE_SOURCES} ${KERNEL_DRIVER_SOURCES} apps/OS/OS.c apps/OS/API/Grapich/gui.c apps/OS/API/Grapich/windows.c)
+set(KERNEL_SOURCES ${KERNEL_CORE_SOURCES} ${KERNEL_DRIVER_SOURCES} src/kernel/core/power.c apps/OS/OS.c apps/OS/API/Grapich/gui.c apps/OS/API/Grapich/windows.c)
 set(BOOT_SOURCE src/boot/boot.s)
 set(BOOTSECTOR_SOURCE src/boot/bootsector.s)
 set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/core/linker.ld)

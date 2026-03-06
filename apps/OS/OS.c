@@ -6,6 +6,7 @@
 #include "drivers/mouse.h"
 #include "drivers/rtc.h"
 #include "drivers/thread.h"
+#include "kernel/power.h"
 
 typedef struct {
     RECT start_menu;
@@ -23,6 +24,17 @@ typedef struct {
 
 static desktop_state_t g_desktop;
 static HWND g_main_window;
+
+
+void os_shutdown(void)
+{
+    kernel_shutdown();
+}
+
+void os_restart(void)
+{
+    kernel_restart();
+}
 
 static int rect_width(RECT rect) { return rect.right - rect.left; }
 static int rect_height(RECT rect) { return rect.bottom - rect.top; }
@@ -119,7 +131,7 @@ static void console_execute_command(void)
     if (g_desktop.console_input_len == 0) {
         console_push_line("Type 'help' for commands");
     } else if (str_eq(command_line, "help")) {
-        console_push_line("help clear echo time about exit");
+        console_push_line("help clear echo time about exit shutdown restart");
     } else if (str_eq(command_line, "clear")) {
         console_clear();
     } else if (str_starts_with(command_line, "echo ")) {
@@ -139,6 +151,12 @@ static void console_execute_command(void)
         console_push_line(response);
     } else if (str_eq(command_line, "about")) {
         console_push_line("SBoy28 desktop console v1");
+    } else if (str_eq(command_line, "shutdown")) {
+        console_push_line("Shutting down...");
+        os_shutdown();
+    } else if (str_eq(command_line, "restart")) {
+        console_push_line("Restarting...");
+        os_restart();
     } else if (str_eq(command_line, "exit")) {
         close_active_window();
     } else {
@@ -310,6 +328,16 @@ static void draw_active_window(HDC dc)
             TextOutA(dc, g_desktop.active_window.left + 6, g_desktop.active_window.bottom - 12,
                      input_line, (int)strlen(input_line));
         }
+    } else if (str_eq(g_desktop.active_window_title, "Shut Down")) {
+        TextOutA(dc, g_desktop.active_window.left + 10, g_desktop.active_window.top + 20,
+                 "Press ENTER to power off", 24);
+        TextOutA(dc, g_desktop.active_window.left + 10, g_desktop.active_window.top + 34,
+                 "Press ESC to cancel", 19);
+    } else if (str_eq(g_desktop.active_window_title, "Restart")) {
+        TextOutA(dc, g_desktop.active_window.left + 10, g_desktop.active_window.top + 20,
+                 "Press ENTER to reboot", 21);
+        TextOutA(dc, g_desktop.active_window.left + 10, g_desktop.active_window.top + 34,
+                 "Press ESC to cancel", 19);
     } else {
         TextOutA(dc, g_desktop.active_window.left + 10, g_desktop.active_window.top + 20,
                  "Window opened from Start menu", 29);
@@ -399,6 +427,15 @@ static LRESULT CALLBACK desktop_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPA
 
     switch (msg) {
         case WM_KEYDOWN:
+            if (g_desktop.active_window_open && str_eq(g_desktop.active_window_title, "Shut Down") && wParam == KEY_ENTER) {
+                os_shutdown();
+                return 0;
+            }
+            if (g_desktop.active_window_open && str_eq(g_desktop.active_window_title, "Restart") && wParam == KEY_ENTER) {
+                os_restart();
+                return 0;
+            }
+
             console_handle_key((uint8_t)wParam);
             if (wParam == KEY_C) set_active_window("Console");
             if (wParam == KEY_T) set_active_window("Task Manager");
