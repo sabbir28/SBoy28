@@ -40,6 +40,7 @@ static int rect_width(RECT rect) { return rect.right - rect.left; }
 static int rect_height(RECT rect) { return rect.bottom - rect.top; }
 
 static void close_active_window(void);
+static void reset_active_window_layout(void);
 
 static bool str_eq(const char* left, const char* right)
 {
@@ -205,15 +206,7 @@ static void set_active_window(const char* title)
 {
     g_desktop.active_window_title = title;
     g_desktop.active_window_open = TRUE;
-    g_desktop.active_window.left = 0;
-    g_desktop.active_window.top = 0;
-    g_desktop.active_window.right = VGA_WIDTH;
-    g_desktop.active_window.bottom = VGA_HEIGHT - 16;
-
-    g_desktop.close_button.left = g_desktop.active_window.right - 14;
-    g_desktop.close_button.top = g_desktop.active_window.top + 2;
-    g_desktop.close_button.right = g_desktop.active_window.right - 4;
-    g_desktop.close_button.bottom = g_desktop.active_window.top + 10;
+    reset_active_window_layout();
 
     if (str_eq(title, "Console")) {
         console_clear();
@@ -227,6 +220,22 @@ static void close_active_window(void)
 {
     g_desktop.active_window_open = FALSE;
     g_desktop.active_window_title = "None";
+}
+
+static void reset_active_window_layout(void)
+{
+    const int32_t window_width = VGA_WIDTH - 40;
+    const int32_t window_height = VGA_HEIGHT - 44;
+
+    g_desktop.active_window.left = (VGA_WIDTH - window_width) / 2;
+    g_desktop.active_window.top = 8;
+    g_desktop.active_window.right = g_desktop.active_window.left + window_width;
+    g_desktop.active_window.bottom = g_desktop.active_window.top + window_height;
+
+    g_desktop.close_button.left = g_desktop.active_window.right - 14;
+    g_desktop.close_button.top = g_desktop.active_window.top + 2;
+    g_desktop.close_button.right = g_desktop.active_window.right - 4;
+    g_desktop.close_button.bottom = g_desktop.active_window.top + 10;
 }
 
 static void desktop_init(void)
@@ -245,15 +254,7 @@ static void desktop_init(void)
     g_desktop.active_window_title = "None";
     g_desktop.active_window_open = FALSE;
 
-    g_desktop.active_window.left = 0;
-    g_desktop.active_window.top = 0;
-    g_desktop.active_window.right = VGA_WIDTH;
-    g_desktop.active_window.bottom = VGA_HEIGHT - 16;
-
-    g_desktop.close_button.left = g_desktop.active_window.right - 14;
-    g_desktop.close_button.top = g_desktop.active_window.top + 2;
-    g_desktop.close_button.right = g_desktop.active_window.right - 4;
-    g_desktop.close_button.bottom = g_desktop.active_window.top + 10;
+    reset_active_window_layout();
 
     memset(g_desktop.console_input, 0, sizeof(g_desktop.console_input));
     g_desktop.console_input_len = 0;
@@ -557,10 +558,7 @@ int main(void)
 
         process_mouse();
 
-        while (GetMessage(&msg, NULL, 0, 0)) {
-            if (msg.message == WM_NULL) {
-                break;
-            }
+        if (GetMessage(&msg, NULL, 0, 0) && msg.message != WM_NULL) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
