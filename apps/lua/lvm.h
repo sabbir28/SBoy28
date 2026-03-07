@@ -41,9 +41,9 @@
 ** Rounding modes for float->integer coercion
  */
 typedef enum {
-  F2Ieq,     /* no rounding; accepts only integral values */
-  F2Ifloor,  /* takes the floor of the number */
-  F2Iceil    /* takes the ceiling of the number */
+    F2Ieq,     /* no rounding; accepts only integral values */
+    F2Ifloor,  /* takes the floor of the number */
+    F2Iceil    /* takes the ceiling of the number */
 } F2Imod;
 
 
@@ -121,9 +121,9 @@ LUAI_FUNC int luaV_tointegerns (const TValue *obj, lua_Integer *p,
                                 F2Imod mode);
 LUAI_FUNC int luaV_flttointeger (lua_Number n, lua_Integer *p, F2Imod mode);
 LUAI_FUNC lu_byte luaV_finishget (lua_State *L, const TValue *t, TValue *key,
-                                                StkId val, lu_byte tag);
+                                  StkId val, lu_byte tag);
 LUAI_FUNC void luaV_finishset (lua_State *L, const TValue *t, TValue *key,
-                                             TValue *val, int aux);
+                               TValue *val, int aux);
 LUAI_FUNC void luaV_finishOp (lua_State *L);
 LUAI_FUNC void luaV_execute (lua_State *L, CallInfo *ci);
 LUAI_FUNC void luaV_concat (lua_State *L, int total);

@@ -21,9 +21,9 @@ typedef struct Zio ZIO;
 
 
 typedef struct Mbuffer {
-  char *buffer;
-  size_t n;
-  size_t buffsize;
+    char *buffer;
+    size_t n;
+    size_t buffsize;
 } Mbuffer;
 
 #define luaZ_initbuffer(L, buff) ((buff)->buffer = NULL, (buff)->buffsize = 0)
@@ -45,7 +45,7 @@ typedef struct Mbuffer {
 
 
 LUAI_FUNC void luaZ_init (lua_State *L, ZIO *z, lua_Reader reader,
-                                        void *data);
+                          void *data);
 LUAI_FUNC size_t luaZ_read (ZIO* z, void *b, size_t n);	/* read next n bytes */
 
 LUAI_FUNC const void *luaZ_getaddr (ZIO* z, size_t n);
@@ -54,11 +54,11 @@ LUAI_FUNC const void *luaZ_getaddr (ZIO* z, size_t n);
 /* --------- Private Part ------------------ */
 
 struct Zio {
-  size_t n;			/* bytes still unread */
-  const char *p;		/* current position in buffer */
-  lua_Reader reader;		/* reader function */
-  void *data;			/* additional data */
-  lua_State *L;			/* Lua state (for reader) */
+    size_t n;			/* bytes still unread */
+    const char *p;		/* current position in buffer */
+    lua_Reader reader;		/* reader function */
+    void *data;			/* additional data */
+    lua_State *L;			/* Lua state (for reader) */
 };
 
 
