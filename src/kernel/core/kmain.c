@@ -96,7 +96,7 @@ void kmain(multiboot_info_t* mbd) {
     draw_boot_log_line(50, "mouse initialized successfully", BRIGHT_GREEN);
 
     thread_system_init();
-    mutex_init(&vga_mutex);
+    //mutex_init(&vga_mutex);
     draw_boot_log_line(62, "thread initialized successfully", BRIGHT_GREEN);
     draw_boot_log_line(86, "switching to OS home screen...", YELLOW);
 
